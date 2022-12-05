@@ -14,12 +14,12 @@ let createStack (row: char seq) =
         Some(Stack(tail |> Seq.filter (System.Char.IsWhiteSpace >> not)))
     | _ -> None
     
-let rec createStacks (lines: string list) =
-    let matrix = lines |> Seq.map (fun x -> x.ToCharArray())
-    matrix
-         |> transpose
-         |> Seq.choose createStack
-         |> Seq.toList
+let createStacks (lines: string list) =
+    lines
+        |> Seq.map (fun x -> x.ToCharArray())
+        |> transpose
+        |> Seq.choose createStack
+        |> Seq.toList
     
 let separateStackAndCommands (lines: string list) =
     let idx = lines |> Seq.findIndex System.String.IsNullOrWhiteSpace
@@ -49,6 +49,7 @@ let CrateMover9001 count (source: Stack<char>) (target: Stack<char>) =
         l.Add(source.Pop())
 
     for item in l |> Seq.rev do target.Push(item)
+    
 let print (stack: Stack<char>) = printf "%c" <| stack.Pop()
 
 let input = File.ReadLines("input")
