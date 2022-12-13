@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "fsharp", "fsharp.fsproj", "{43F326CF-46BB-41F7-BE66-8EF5A0F4E291}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{43F326CF-46BB-41F7-BE66-8EF5A0F4E291}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43F326CF-46BB-41F7-BE66-8EF5A0F4E291}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43F326CF-46BB-41F7-BE66-8EF5A0F4E291}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43F326CF-46BB-41F7-BE66-8EF5A0F4E291}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
