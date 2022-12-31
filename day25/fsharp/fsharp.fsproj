@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Snafu.fs" />
         <Compile Include="Program.fs" />
         <Content Include="test.txt">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
