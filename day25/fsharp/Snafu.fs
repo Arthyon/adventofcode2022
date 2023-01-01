@@ -6,7 +6,6 @@ let private toNumber = function | '2' -> 2m | '1' -> 1m | '0' -> 0m | '-' -> -1m
 
 let private getDecimals (i: float) = i - Math.Truncate i
 
-
 let private toSnafu (i: float) =
     let rec toSnafu' (i:float) part snafu =
         if part < 0 then snafu |> Seq.rev |> Seq.toArray |> String
@@ -40,6 +39,12 @@ type Snafu = private { underlyingValue: decimal }
                     this.underlyingValue |> float |> toSnafu
                 static member (+) (n1: Snafu, n2 : Snafu) =
                     { underlyingValue = n1.underlyingValue + n2.underlyingValue }
+                static member (-) (n1: Snafu, n2 : Snafu) =
+                    { underlyingValue = n1.underlyingValue - n2.underlyingValue }
+                static member (*) (n1: Snafu, n2 : Snafu) =
+                    { underlyingValue = n1.underlyingValue * n2.underlyingValue }
+                static member (/) (n1: Snafu, n2 : Snafu) =
+                    { underlyingValue = n1.underlyingValue / n2.underlyingValue }
                     
 let snafu s = { underlyingValue = s |> Seq.map toNumber |> Seq.rev |> Seq.toArray |> Seq.indexed |> Seq.map (fun (idx,el) -> el * (pown 5m idx)) |> Seq.reduce (+) }
 
