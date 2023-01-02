@@ -51,22 +51,27 @@ let bfs (connections: Map<string, Set<string>>) =
     memoize bfs'
     
 let cache = Dictionary<_,_>()
-let visited = HashSet<string>()
 
-let rec calculateMaxPressure location minutes (allValves: Map<string,int>) interestingValves connections =
-    let maxPressure' (location, minutes, valves) =
+let rec calculateMaxPressure location minutes (allValves: Map<string,int>) interestingValves connections elephant =
+    let maxPressure' (location, minutes, valves, elephant) =
         let baseScore = allValves[location] * minutes
-        let bestValve, score =
+        let score =
             valves
             |> Seq.map (fun v -> v, (bfs connections (location, v)) + 1)
             |> Seq.filter ( fun (_,pathLength) -> pathLength <= minutes)
-            |> Seq.map (fun (v, pathLength) -> v, calculateMaxPressure v (minutes - pathLength) allValves (Set.remove v valves) connections)
-            |> (fun s -> if Seq.isEmpty s then "",0 else Seq.maxBy snd s)
-        visited.Add(bestValve) |> ignore
+            |> Seq.map (fun (v, pathLength) -> calculateMaxPressure v (minutes - pathLength) allValves (Set.remove v valves) connections elephant)
+            |> (fun s -> if Seq.isEmpty s then 0 else Seq.max s)
+            |> (fun score ->
+                if elephant then
+                        let human = calculateMaxPressure "AA" 26 allValves valves connections false
+                        max score human
+                else
+                    score)
+            
         baseScore + score
         
         
-    let key = (location, minutes, interestingValves)
+    let key = (location, minutes, interestingValves, elephant)
     match cache.TryGetValue key with
     | true, value -> value
     | false, _    ->
@@ -81,12 +86,6 @@ let connections = input |> Seq.map getConnections |> Map.ofSeq
 let allValves = input |> Seq.map getValve |> Map.ofSeq
 let interestingValves = allValves |> Map.filter (fun _ v -> v > 0) |> Map.keys |> Set.ofSeq
 
-calculateMaxPressure "AA" 30 allValves interestingValves connections |> printfn "%A"
+calculateMaxPressure "AA" 30 allValves interestingValves connections false |> printfn "%A"
 
-// Part 2 doesn't work. Elephant should be run in parallel to human, because human has time to open all interesting valves,
-//  so elephant does not open any valves with this approach
-visited.Clear()
-let human = calculateMaxPressure "AA" 26 allValves interestingValves connections
-let nonVisitedValves = Seq.except visited interestingValves |> Set.ofSeq
-let elephant = calculateMaxPressure "AA" 26 allValves nonVisitedValves connections
-printfn "%A" (human + elephant)
+calculateMaxPressure "AA" 26 allValves interestingValves connections true |> printfn "%A"
