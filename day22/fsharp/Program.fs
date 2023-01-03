@@ -1,5 +1,6 @@
 ﻿open System.IO
 open System.Text.RegularExpressions
+open fsharp.Cube
 
 let modulo x m = (x%m + m)%m
 
@@ -22,21 +23,7 @@ let parseLine line = line |> Seq.map (fun c -> if c = '.' then Walkable else if 
 let parseMap lines =
     lines |> Seq.map parseLine |> Seq.toList
     
-// let printBlock = function
-//     | Walkable -> printf "."
-//     | Edge -> printf " "
-//     | Wall -> printf "#"
-//     
-// let printMap (map: 'a list list) player =
-//     for x = 0 to (map.Length - 1) do
-//         for y = 0 to (map[x].Length - 1) do
-//             if player.pos = (x,y) then
-//                 printf $"{player.dir}"
-//             else printBlock (map[x][y])
-//         printfn ""
-//     printfn ""
-    
-let rec move (path: Block List) pos dir lastWalkablePos steps =
+let rec move (path: Block list) pos dir lastWalkablePos steps =
     if steps = 0 then pos
     else
         let newPos = modulo (pos + dir) path.Length
@@ -60,29 +47,87 @@ let moveToNewPos (map: Block list list) player steps =
     if player.dir = right || player.dir = left
     then { player with pos = fst player.pos, newPos}
     else { player with pos = newPos, snd player.pos }
+    
+let addTups (x1,y1) (x2,y2) = x1 + x2, y1 + y2
+
+let getMovementDirection dir =
+    match dir with
+    | '^' -> (-1,0)
+    | 'v' -> (1,0)
+    | '<' -> (0,-1)
+    | '>' -> (0,1)
+    | _ -> failwith "todo"
+    
+let getNextBlock (map: Block list list) (x,y) =
+    if x >= 0 && map.Length > x && y >= 0 && map[x].Length > y then map[x][y] else Edge
+    
+//let rec teleportMove map teleport player steps =
+//    let pos,dir = teleport player.pos player.dir
+//    let nextBlock = getNextBlock map pos
+//    match nextBlock with
+//    | Wall -> player,steps, Wall
+//    | Walkable ->
+//        {player with pos = pos; dir = dir},steps, Walkable
+//    | Edge -> failwithf "todo2"
+//    // | Edge -> teleportMove map teleport { player with pos = pos; dir = dir } (steps - 1)
+    
+let rec cubeMove (map: Block list list) player movement steps teleport =
+    if steps = 0 then player
+    else
+        let newPos = addTups player.pos movement
+        let nextBlock = getNextBlock map newPos
+        match nextBlock with
+        | Edge ->
+            
+            let pos,dir = teleport player.pos player.dir
+            let nextBlock = getNextBlock map pos
+            match nextBlock with
+            | Wall -> player
+            | Walkable ->
+                let newMovement = getMovementDirection dir
+                cubeMove map {player with pos = pos; dir = dir} newMovement (steps - 1) teleport
+            | Edge -> failwith "todo2"
+        | Wall -> player
+        | Walkable -> cubeMove map {player with pos = newPos} movement (steps - 1) teleport
         
-let movePlayer map player = function
-    | Walk steps -> moveToNewPos map player steps
+    
+let moveToNewPosCube teleport (map: Block list list) player steps =
+    let dir = getMovementDirection player.dir
+            
+    cubeMove map player dir steps teleport
+        
+let movePlayer map player moveImpl = function
+    | Walk steps -> moveImpl map player steps
     | TurnLeft   -> let index = directions |> Seq.findIndex (fun c -> c = player.dir)
                     { player with dir = directions[modulo (index - 1) 4]}
     | TurnRight  -> let index = directions |> Seq.findIndex (fun c -> c = player.dir)
                     { player with dir = directions[modulo (index + 1) 4]}
 
-let rec followPath map player = function
-    | movement::rest -> let newPlayer = movePlayer map player movement
-                        followPath map newPlayer rest
+let rec followPath map player moveImpl = function
+    | movement::rest -> let newPlayer = movePlayer map player moveImpl movement
+                        followPath map newPlayer moveImpl rest
     | [] -> player
+    
+let printPassword player =
+    let row = (fst player.pos + 1) * 1000
+    let col = (snd player.pos + 1) * 4
+    let dir = directions |> Seq.findIndex (fun c -> c = player.dir)
+    [row;col;dir] |> Seq.sum |> printfn "%A"
+    
         
-let input = File.ReadAllLines("input")
+let fileName = "input"
+let input = File.ReadAllLines(fileName)
 let movement = parseMovement input[^0] |> Seq.toList
 let map = parseMap input[..^2]
 
+// part 1
 let player = { pos = 0, map[0] |> Seq.findIndex ( fun c -> match c with | Walkable -> true | _ -> false) ; dir = right }
-let ending = followPath map player movement
+followPath map player moveToNewPos movement |> printPassword
 
-let row = (fst ending.pos + 1) * 1000
-let col = (snd ending.pos + 1) * 4
-let dir = directions |> Seq.findIndex (fun c -> c = ending.dir)
-[row;col;dir] |> Seq.sum |> printfn "%A"
 
-    
+// part 2
+let player2 = { pos = 0, map[0] |> Seq.findIndex ( fun c -> match c with | Walkable -> true | _ -> false) ; dir = right }
+
+let faces = if fileName = "input" then getCurrentRealFaces else getCurrentTestFaces
+let teleport = teleport faces
+followPath map player2 (moveToNewPosCube teleport) movement |> printPassword
